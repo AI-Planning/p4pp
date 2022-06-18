@@ -2,6 +2,13 @@
 
 Tools for grading planning assignments.
 
+## TODO
+
+- [ ] Make `src/` and move files there (updating docs and scripts)
+- [ ] Parameterize where the reference and assignment files are
+- [ ] Create an example and show it in usage
+- [ ] Make public
+
 ## Building
 
 Assuming you already have `planutils` installed and working, you can just run `./setup.sh`. Alternatively, you can run things through the included docker image.
