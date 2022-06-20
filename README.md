@@ -4,8 +4,8 @@ Tools for grading planning assignments.
 
 ## TODO
 
-- [ ] Make `src/` and move files there (updating docs and scripts)
-- [ ] Parameterize where the reference and assignment files are
+- [x] Make `src/` and move files there (updating docs and scripts)
+- [x] Parameterize where the reference and assignment files are
 - [ ] Create an example and show it in usage
 - [ ] Make public
 
@@ -26,6 +26,8 @@ Running the image on Linux with a mirrored directory for the assignment PDDL:
 ```bash
 docker run -it --privileged -v $(pwd):/DATA p4pp
 ```
+
+It assumes that the current directory has both `assignments` and `reference` subdirectories.
 
 ## Usage
 

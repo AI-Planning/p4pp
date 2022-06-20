@@ -3,11 +3,8 @@ FROM aiplanning/planutils:latest
 
 RUN mkdir /PROJECT
 
-COPY grade.py /PROJECT/grade.py
-COPY merge.py /PROJECT/merge.py
-COPY plan.sh /PROJECT/plan.sh
+COPY src/ /PROJECT/src
 COPY setup.sh /PROJECT/setup.sh
-COPY validate.sh /PROJECT/validate.sh
 
 WORKDIR /PROJECT
 
