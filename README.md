@@ -27,7 +27,7 @@ Running the image on Linux with a mirrored directory for the assignment PDDL:
 docker run -it --privileged -v $(pwd):/DATA p4pp
 ```
 
-It assumes that the current directory has both `assignments` and `reference` subdirectories.
+It assumes that the current directory has both `assignments`, `reference`, and `marking` subdirectories.
 
 ## Usage
 

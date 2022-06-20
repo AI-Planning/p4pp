@@ -9,7 +9,7 @@ USAGE = """
 
 
 # Change to reflect the list of problems for testing
-PROBLEMS = ['p01', 'p02', 'p03']
+PROBLEMS = ['prob01', 'prob02', 'prob03']
 REFERENCE_LOC = '/DATA/reference'
 SUBMISSIONS_LOC = '/DATA/submissions'
 MARKING_LOC = '/DATA/marking'
