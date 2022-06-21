@@ -9,10 +9,10 @@ USAGE = """
 
 
 # Change to reflect the list of problems for testing
-PROBLEMS = ['prob01', 'prob02', 'prob03']
-REFERENCE_LOC = '/DATA/reference'
-SUBMISSIONS_LOC = '/DATA/submissions'
-MARKING_LOC = '/DATA/marking'
+PROBLEMS = ['p01', 'p02', 'p03']
+REFERENCE_LOC = 'data/reference'
+SUBMISSIONS_LOC = 'data/submissions'
+MARKING_LOC = 'data/marking'
 
 
 # Make sure all three directories exist
@@ -71,9 +71,9 @@ def format_results(results):
 
 
 def gradeall():
-    sdirs = glob.glob('{SUBMISSIONS_LOC}/*')
+    sdirs = glob.glob(f'{SUBMISSIONS_LOC}/*')
     for sdir in sdirs:
-        student_id = sdir.split('/')[1]
+        student_id = sdir.split('/')[-1]
         grade(student_id)
 
 def grade(student_id):
