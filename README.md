@@ -2,13 +2,6 @@
 
 Tools for grading planning assignments.
 
-## TODO
-
-- [x] Make `src/` and move files there (updating docs and scripts)
-- [x] Parameterize where the reference and assignment files are
-- [ ] Create an example and show it in usage
-- [ ] Make public
-
 ## Building
 
 Assuming you already have `planutils` installed and working, you can just run `./setup.sh`. Alternatively, you can run things through the included docker image.
@@ -36,13 +29,13 @@ First step is to configure the top of `grade.py` for the problem names and direc
 ### Grading a single assignment
 
 ```bash
-$ python3 grade.py <assignment ID>
+python3 grade.py <assignment ID>
 ```
 
 ### Grading all assignments
 
 ```bash
-$ python3 grade.py all
+python3 grade.py all
 ```
 
 ### Viewing the results
