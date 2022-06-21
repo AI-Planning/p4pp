@@ -1,9 +1,7 @@
 
 FROM aiplanning/planutils:latest
 
-RUN mkdir /PROJECT
-
-COPY src/ /PROJECT/src
+COPY src/ /PROJECT
 COPY setup.sh /PROJECT/setup.sh
 
 WORKDIR /PROJECT
