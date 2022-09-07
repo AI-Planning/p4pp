@@ -1,5 +1,5 @@
 
-from tarski.syntax import land, CompoundFormula
+from tarski.syntax import land, lor, CompoundFormula
 from tarski.syntax.formulas import neg, is_neg
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs, PDDLReader
@@ -99,59 +99,75 @@ def main(domain1_name, problem1_name, domain2_name, problem2_name, merged_domain
 
     # # for each set of domain actions get the required parameters, preconditions, effects - map domain2 to domain 1, merge preconditions
     # #this is to make fail_turnon1, fail_turnoff1
+    s = Simplify(parse2, parse2.init)
     for action in domain1_actions:
-        name = 'fail_' + action + '1'
-        action_domain2 = parse1.get_action(action)
-
-        # get fail action parameters
-        domain_parameters = action_domain2.parameters
-
-        # get preconditions of both domains
-        domain1_precond = action_domain2.precondition
+        # get preconditions of domain2 
         domain2_precond = parse2.get_action(action).precondition
+        for neg_dom2_p in domain2_precond.subformulas:
+            remove = '( ,?)'
+            name = 'fail_' + action + '1' + '_prec_'+str(neg_dom2_p)
+            for r in remove: name = name.replace(r,'_')
 
-        #this creates the merged preconds for fail actions for domain1
-        merged_precs = []
-        s = Simplify(parse2, parse2.init)
-        for dom2_p in domain2_precond.subformulas:
-                merged_precs.append(s.simplify_expression(neg(dom2_p)))
-        merged_precs.append(domain1_precond)
-        final_prec = land(*merged_precs) # This makes land(*[A,B,C]) actually be land(A,B,C)
+            action_domain2 = parse1.get_action(action)
 
-        # add the effect 'failed' and (and) it
-        # def action(self, name, parameters, precondition, effects, cost=None)
-        pd = parse1.action(name, domain_parameters,
-                    precondition=final_prec,
-                    effects=[fs.AddEffect(failed())])
+            # get fail action parameters
+            domain_parameters = action_domain2.parameters
+
+            # get preconditions of both domains
+            domain1_precond = action_domain2.precondition
+
+            #this creates the merged preconds for fail actions for domain1
+            merged_precs = []
+
+            for dom2_p in domain2_precond.subformulas:
+                if neg_dom2_p == dom2_p:
+                    merged_precs.append(s.simplify_expression(neg(dom2_p)))# Negate just single precondition
+                else:
+                    merged_precs.append(dom2_p)
+            merged_precs.append(domain1_precond)
+            final_prec = land(*merged_precs)# land(A,B,C)
+
+            # add the effect 'failed' and (and) it
+            # def action(self, name, parameters, precondition, effects, cost=None)
+            pd = parse1.action(name, domain_parameters,
+                        precondition=final_prec,
+                        effects=[fs.AddEffect(failed())])
 
 
     # # # for each set of domain actions get the required parameters, preconditions, effects - map domain1 to domain2, merge preconditions
     # # #this is to make fail_turnon2, fail_turnoff2
+    s = Simplify(parse1, parse1.init)
     for action in domain2_actions:
-        name = 'fail_' + action + '2'
-
-        action_domain2 = parse2.get_action(action)
-
-        # get fail action parameters
-        domain_parameters = action_domain2.parameters
-
-        # get preconditions of both domains
+        # get preconditions domain1
         domain1_precond = parse1.get_action(action).precondition
-        domain2_precond = action_domain2.precondition
+        for neg_dom1_p in domain1_precond.subformulas:
+            remove = '( ,?)'
+            name = 'fail_' + action + '2' + '_prec_'+str(neg_dom1_p)
+            for r in remove: name = name.replace(r,'_')
 
-        #this creates the merged preconds for fail actions for domain2
-        merged_precs = []
-        s = Simplify(parse1, parse1.init)
-        for dom1_p in domain1_precond.subformulas:
-            merged_precs.append(s.simplify_expression(neg(dom1_p)))
-        merged_precs.append(domain2_precond)
+            action_domain2 = parse2.get_action(action)
 
-        final_prec = land(*merged_precs) # This makes land(*[A,B,C]) actually be land(A,B,C)
+            # get fail action parameters
+            domain_parameters = action_domain2.parameters
 
-        # make effect 'failed'
-        pd = parse1.action(name, domain_parameters,
-                    precondition=final_prec,
-                    effects=[fs.AddEffect(failed())])
+            # get preconditions of domain2
+            domain2_precond = action_domain2.precondition
+
+            #this creates the merged preconds for fail actions for domain2
+            merged_precs = []
+            
+            for dom1_p in domain1_precond.subformulas:
+                if neg_dom1_p == dom1_p:
+                    merged_precs.append(s.simplify_expression(neg(dom1_p)))# Negate just single precondition
+                else:
+                    merged_precs.append(dom1_p)
+            merged_precs.append(domain2_precond)
+            final_prec = land(*merged_precs)# land(A,B,C)
+
+            # make effect 'failed'
+            pd = parse1.action(name, domain_parameters,
+                        precondition=final_prec,
+                        effects=[fs.AddEffect(failed())])
 
     # # merge the non fail actions from domain2 onto domain1
     for action in domain2_actions:
@@ -261,7 +277,7 @@ if __name__ == "__main__":
     problem2_name = sys.argv[4]
     merged_domain = sys.argv[5]
     merged_problem = sys.argv[6]
-
+    
     main(domain1_name, problem1_name, domain2_name, problem2_name, merged_domain, merged_problem)
 
 
