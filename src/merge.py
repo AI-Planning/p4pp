@@ -3,6 +3,7 @@ from tarski.syntax import land, CompoundFormula
 from tarski.syntax.formulas import neg, is_neg
 import tarski.fstrips as fs
 from tarski.io import fstrips as iofs, PDDLReader
+from tarski.fstrips.manipulation import Simplify
 
 import sys, os
 
@@ -111,11 +112,9 @@ def main(domain1_name, problem1_name, domain2_name, problem2_name, merged_domain
 
         #this creates the merged preconds for fail actions for domain1
         merged_precs = []
-        if is_neg(domain2_precond): #check if precond is already negated, if yes, get subformulas to have positive version
-            if isinstance(domain2_precond, CompoundFormula):
-                merged_precs.extend(domain2_precond.subformulas)
-        else: #otherwise negate it
-            merged_precs.append(neg(domain2_precond))
+        s = Simplify(parse2, parse2.init)
+        for dom2_p in domain2_precond.subformulas:
+                merged_precs.append(s.simplify_expression(neg(dom2_p)))
         merged_precs.append(domain1_precond)
         final_prec = land(*merged_precs) # This makes land(*[A,B,C]) actually be land(A,B,C)
 
@@ -142,11 +141,9 @@ def main(domain1_name, problem1_name, domain2_name, problem2_name, merged_domain
 
         #this creates the merged preconds for fail actions for domain2
         merged_precs = []
-        if is_neg(domain1_precond):
-            if isinstance(domain1_precond, CompoundFormula):
-                merged_precs.extend(domain1_precond.subformulas)
-        else:
-            merged_precs.append(neg(domain1_precond))
+        s = Simplify(parse1, parse1.init)
+        for dom1_p in domain1_precond.subformulas:
+            merged_precs.append(s.simplify_expression(neg(dom1_p)))
         merged_precs.append(domain2_precond)
 
         final_prec = land(*merged_precs) # This makes land(*[A,B,C]) actually be land(A,B,C)
