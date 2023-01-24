@@ -1,10 +1,11 @@
 
 FROM aiplanning/planutils:latest
 
-COPY src/ /PROJECT
-COPY setup.sh /PROJECT/setup.sh
+COPY src/ /root/PROJECT
+COPY setup.sh /root/PROJECT/setup.sh
+RUN chmod +x /root/PROJECT/*.sh
 
-WORKDIR /PROJECT
+WORKDIR /root/PROJECT
 
 RUN ./setup.sh
 

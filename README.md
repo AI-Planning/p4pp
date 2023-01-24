@@ -17,7 +17,7 @@ docker build -t p4pp .
 Running the image on Linux with a mirrored directory for the assignment PDDL:
 
 ```bash
-docker run -it --privileged -v $(pwd):/PROJECT/data  p4pp
+docker run -it --privileged -v $(pwd):/root/PROJECT/data p4pp
 ```
 
 It assumes that the current directory has both `assignments`, `reference`, and `marking` subdirectories.
