@@ -1,6 +1,8 @@
 
 FROM aiplanning/planutils:latest
 
+RUN pip3 install -y flask
+
 COPY src/ /root/PROJECT
 COPY setup.sh /root/PROJECT/setup.sh
 RUN chmod +x /root/PROJECT/*.sh
