@@ -1,17 +1,40 @@
 
 import os, random, string
 
-from flask import Flask
+from flask import Flask, request
 
 app = Flask(__name__)
+
+
+# Change to reflect the list of problems for testing
+REFERENCE_LOC = 'data/reference'
+TEMP_LOC = '/tmp'
+
 
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
 
-# Change to reflect the list of problems for testing
-REFERENCE_LOC = 'data/reference'
-TEMP_LOC = '/tmp'
+# endpoint that takes in a domain and problem file as strings in a json post request
+# testing string:  curl -X POST -H "Content-Type: application/json" -d '{"domain": "domain_string", "problem": "problem_string"}' http://localhost:5000/align/2/
+@app.route("/align/<int:prob>/", methods=['POST'])
+def align(prob):
+    print(request)
+    print(request.form)
+
+    dstring = request.json['domain']
+    pstring = request.json['problem']
+    rn = rand_hash()
+    dfile = f'{TEMP_LOC}/domain.{rn}.pddl'
+    pfile = f'{TEMP_LOC}/problem.{rn}.pddl'
+    with open(dfile, 'w') as f:
+        f.write(dstring)
+    with open(pfile, 'w') as f:
+        f.write(pstring)
+    print(dfile, pfile)
+    return check_alignment(prob, dfile, pfile)
+
+
 
 def rand_hash():
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))

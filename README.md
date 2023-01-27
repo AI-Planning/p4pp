@@ -42,6 +42,14 @@ python3 grade.py all
 
 In the `marking/` directory, you can view the results of the grading. `grade.txt` shows the combined results, and all the generated files are also sitting there.
 
+## Server
+
+### Running it
+
+```bash
+flask --app src/server run
+```
+
 ## Requirements
 
 If installing locally, you will need the following installed:
