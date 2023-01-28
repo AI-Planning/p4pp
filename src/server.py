@@ -10,18 +10,16 @@ app = Flask(__name__)
 REFERENCE_LOC = 'data/reference'
 TEMP_LOC = '/tmp'
 
+PROBLEMS = ['p01', 'p02', 'p03']
 
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
 
 # endpoint that takes in a domain and problem file as strings in a json post request
-# testing string:  curl -X POST -H "Content-Type: application/json" -d '{"domain": "domain_string", "problem": "problem_string"}' http://localhost:5000/align/2/
-@app.route("/align/<int:prob>/", methods=['POST'])
+# testing string:  curl -X POST -H "Content-Type: application/json" --data @data2.json http://localhost:80/align/p01/
+@app.route("/align/<prob>/", methods=['POST'])
 def align(prob):
-    print(request)
-    print(request.form)
-
     dstring = request.json['domain']
     pstring = request.json['problem']
     rn = rand_hash()
@@ -31,9 +29,40 @@ def align(prob):
         f.write(dstring)
     with open(pfile, 'w') as f:
         f.write(pstring)
-    print(dfile, pfile)
-    return check_alignment(prob, dfile, pfile)
+    try:
+        (align, plan) =  check_alignment(prob, dfile, pfile)
+        assert align or plan
+        message = "Everything looks good!"
+        if plan:
+            steps = plan.split('\n')
+            assert '' == steps[-1]
+            steps = steps[:-2]
+            assert '(fail' in steps[-1]
+            failed_action_name = steps[-1].split(' ')[0].split('fail_')[1]
+            direction = failed_action_name[-1]
+            failed_action = f'({failed_action_name[:-1]}'+steps[-1].split(f'fail_{failed_action_name}')[1]
+            steps = steps[:-1]
+            message =  'After executing the following action sequence...\n\n'
+            message += '\n'.join(steps)
+            message += '\n...the following action is executable in '
+            if direction == '1':
+                message += 'the solution, but not your model:\n\n'
+            else:
+                assert direction == '2'
+                message += 'your model, but not the solution:\n\n'
+            message += failed_action + '\n\n'
 
+
+        return {'align': align, 'result': message, 'status': 'success'}
+    except Exception as e:
+        print(e)
+        return {'align': False, 'error': str(e), 'status': 'error'}
+
+
+# json endpoint to return the list of problems
+@app.route("/problems/")
+def problems():
+    return {'problems': PROBLEMS}
 
 
 def rand_hash():
@@ -45,8 +74,8 @@ def check_alignment(prob, dfile, pfile):
     mpfile = f'{TEMP_LOC}/problem.{rn}.merged.pddl'
     planfile = f'{TEMP_LOC}/plan.{rn}.merged'
     planoutput = f'{TEMP_LOC}/plan.{rn}.merged.log'
-    os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob} {dfile} {pfile} {mdfile} {mpfile}')
-    os.system(f'./plan.sh {planfile} {mdfile} {mpfile}')
+    os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob}.pddl {dfile} {pfile} {mdfile} {mpfile}')
+    os.system(f'./plan.sh {planfile} {mdfile} {mpfile} > {planoutput} 2>&1')
 
     # check file for failure message
     with open(f'{planoutput}', 'r') as f:

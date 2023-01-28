@@ -1,7 +1,7 @@
 
 FROM aiplanning/planutils:latest
 
-RUN pip3 install -y flask
+RUN pip3 install flask
 
 COPY src/ /root/PROJECT
 COPY setup.sh /root/PROJECT/setup.sh
