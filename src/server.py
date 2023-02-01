@@ -2,8 +2,10 @@
 import os, random, string
 
 from flask import Flask, request
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 
 # Change to reflect the list of problems for testing
@@ -11,6 +13,15 @@ REFERENCE_LOC = 'data/reference'
 TEMP_LOC = '/tmp'
 
 PROBLEMS = ['p01', 'p02', 'p03']
+
+# serve plugin.js from the local file contents
+@app.route("/plugin.js")
+def plugin():
+    with open('plugin.js', 'r') as f:
+        contents = f.read()
+    # Make sure it has javascript mime type
+    return (contents, 200, {'Content-Type': 'application/javascript'})
+
 
 @app.route("/")
 def hello_world():
