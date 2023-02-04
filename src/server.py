@@ -20,7 +20,7 @@ def plugin():
     with open('plugin.js', 'r') as f:
         contents = f.read()
     # Make sure it has javascript mime type
-    return (contents, 200, {'Content-Type': 'application/javascript'})
+    return (contents, 200, {'Content-Type': 'application/javascript', 'Access-Control-Allow-Origin': '*'})
 
 
 @app.route("/")
@@ -41,9 +41,8 @@ def align(prob):
     with open(pfile, 'w') as f:
         f.write(pstring)
     try:
-        (align, plan) =  check_alignment(prob, dfile, pfile)
-        assert align or plan
-        message = "Everything looks good!"
+        (align, plan, error) =  check_alignment(prob, dfile, pfile)
+        assert align or plan or error
         if plan:
             steps = plan.split('\n')
             assert '' == steps[-1]
@@ -55,19 +54,23 @@ def align(prob):
             steps = steps[:-1]
             message =  'After executing the following action sequence...\n\n'
             message += '\n'.join(steps)
-            message += '\n...the following action is executable in '
+            message += '\n\n...the following action is executable in '
             if direction == '1':
                 message += 'the solution, but not your model:\n\n'
             else:
                 assert direction == '2'
                 message += 'your model, but not the solution:\n\n'
             message += failed_action + '\n\n'
-
-
-        return {'align': align, 'result': message, 'status': 'success'}
+        elif error:
+            message = "There appears to be an error with the merge:\n\n"
+            message += error
+        else:
+            message = "Everything looks good!"
+        resp = {'align': align, 'result': message, 'status': 'success'}
     except Exception as e:
         print(e)
-        return {'align': False, 'error': str(e), 'status': 'error'}
+        resp = {'align': False, 'error': str(e), 'status': 'error'}
+    return (resp, 200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'})
 
 
 # json endpoint to return the list of problems
@@ -85,18 +88,22 @@ def check_alignment(prob, dfile, pfile):
     mpfile = f'{TEMP_LOC}/problem.{rn}.merged.pddl'
     planfile = f'{TEMP_LOC}/plan.{rn}.merged'
     planoutput = f'{TEMP_LOC}/plan.{rn}.merged.log'
-    os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob}.pddl {dfile} {pfile} {mdfile} {mpfile}')
+    mergeoutput = f'{TEMP_LOC}/merge.{rn}.merged.log'
+    os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob}.pddl {dfile} {pfile} {mdfile} {mpfile} > {mergeoutput} 2>&1')
     os.system(f'./plan.sh {planfile} {mdfile} {mpfile} > {planoutput} 2>&1')
 
     # check file for failure message
+    error = None
     with open(f'{planoutput}', 'r') as f:
         mtext = f.read()
         align = 'Search stopped without finding a solution.' in mtext
     if not (align or os.path.isfile(f'{planfile}')):
         print(f'Warning: Alignment failed')
+        with open(f'{mergeoutput}', 'r') as f:
+            error = f.read()
 
     plan = None
     if os.path.isfile(f'{planfile}'):
         with open(f'{planfile}', 'r') as f:
             plan = f.read()
-    return (align, plan)
+    return (align, plan, error)
