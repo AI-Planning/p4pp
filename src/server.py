@@ -63,7 +63,7 @@ def align(prob):
             message += failed_action + '\n\n'
         elif error:
             message = "There appears to be an error with the merge:\n\n"
-            message += error
+            message += error.strip().split('\n')[-1]
         else:
             message = "Everything looks good!"
         resp = {'align': align, 'result': message, 'status': 'success'}
