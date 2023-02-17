@@ -81,6 +81,8 @@ function doAlignment() {
         if (res.status === 'success') {
             window.toastr.success('Alignment complete!');
             showAlignment(res.result);
+        } else if (res.status === 'error') {
+            window.toastr.error('Error: ' + res.error);
         } else
             window.toastr.error('Problem with the server.');
 

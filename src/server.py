@@ -1,5 +1,5 @@
 
-import os, random, string
+import os, random, string, time
 
 from flask import Flask, request
 from flask_cors import CORS
@@ -7,6 +7,11 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+TIME_LIMIT = 10 # seconds
+IPS = {}
+CURRENT_IP = None
+COOL_IT = False
+COOLDOWN_TIME = 90 # seconds
 
 # Change to reflect the list of problems for testing
 REFERENCE_LOC = 'data/reference'
@@ -33,6 +38,7 @@ def hello_world():
 def align(prob):
     dstring = request.json['domain']
     pstring = request.json['problem']
+    ipaddress = request.remote_addr
     rn = rand_hash()
     dfile = f'{TEMP_LOC}/domain.{rn}.pddl'
     pfile = f'{TEMP_LOC}/problem.{rn}.pddl'
@@ -41,7 +47,12 @@ def align(prob):
     with open(pfile, 'w') as f:
         f.write(pstring)
     try:
+
+        if not start_solve(ipaddress):
+            return ({"align": False, "status": "error", "error": "Too many requests. Please try again later."}, 200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'})
         (align, plan, error) =  check_alignment(prob, dfile, pfile)
+        end_solve()
+
         assert align or plan or error
         if plan:
             steps = plan.split('\n')
@@ -68,7 +79,7 @@ def align(prob):
             message = "Everything looks good!"
         resp = {'align': align, 'result': message, 'status': 'success'}
     except Exception as e:
-        print(e)
+        end_solve()
         resp = {'align': False, 'error': str(e), 'status': 'error'}
     return (resp, 200, {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'})
 
@@ -78,6 +89,24 @@ def align(prob):
 def problems():
     return {'problems': PROBLEMS}
 
+
+def start_solve(ip):
+    global CURRENT_IP, COOL_IT
+    if ip in IPS and time.time() - IPS[ip] < COOLDOWN_TIME:
+        return False
+    elif CURRENT_IP:
+        COOL_IT = True
+        return False
+    else:
+        CURRENT_IP = ip
+        return True
+
+def end_solve():
+    global CURRENT_IP, COOL_IT, IPS
+    if CURRENT_IP and COOL_IT:
+        IPS[CURRENT_IP] = time.time()
+    CURRENT_IP = None
+    COOL_IT = False
 
 def rand_hash():
     return ''.join(random.choice(string.ascii_letters + string.digits) for _ in range(16))
@@ -90,7 +119,22 @@ def check_alignment(prob, dfile, pfile):
     planoutput = f'{TEMP_LOC}/plan.{rn}.merged.log'
     mergeoutput = f'{TEMP_LOC}/merge.{rn}.merged.log'
     os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob}.pddl {dfile} {pfile} {mdfile} {mpfile} > {mergeoutput} 2>&1')
-    os.system(f'./plan.sh {planfile} {mdfile} {mpfile} > {planoutput} 2>&1')
+
+    # Check the merge file for an error message
+    with open(f'{mergeoutput}', 'r') as f:
+        mtext = f.read()
+        if 'Error' in mtext:
+            print(f'Warning: Merge failed')
+            return (False, None, mtext)
+
+    t = time.time()
+    os.system(f'./plan.sh {planfile} {mdfile} {mpfile} {TIME_LIMIT}s > {planoutput} 2>&1')
+    t = time.time() - t
+
+    # Adding 3s just because the planner cuts short
+    if t+3 > TIME_LIMIT:
+        print(f'Warning: Alignment timed out')
+        return (False, None, "Alignment timed out. This may indicate everything is fine.")
 
     # check file for failure message
     error = None
@@ -101,7 +145,6 @@ def check_alignment(prob, dfile, pfile):
         print(f'Warning: Alignment failed')
         with open(f'{mergeoutput}', 'r') as f:
             error = f.read()
-
     plan = None
     if os.path.isfile(f'{planfile}'):
         with open(f'{planfile}', 'r') as f:
