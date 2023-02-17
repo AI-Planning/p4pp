@@ -7,7 +7,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
-TIME_LIMIT = 10 # seconds
+TIME_LIMIT = 30 # seconds
 IPS = {}
 CURRENT_IP = None
 COOL_IT = False
