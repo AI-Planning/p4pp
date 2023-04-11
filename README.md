@@ -14,10 +14,10 @@ Perhaps the most convenient way to use this, is to run it through a preconfigure
 docker build -t p4pp .
 ```
 
-Running the image on Linux with a mirrored directory for the assignment PDDL:
+Running the image on Linux with a mirrored directory for the assignment PDDL (navigate to a folder with a "reference" directory):
 
 ```bash
-docker run -it --privileged -v $(pwd):/root/PROJECT/data p4pp
+docker run -it --privileged -p 80:80 -v $(pwd):/root/PROJECT/data p4pp
 ```
 
 It assumes that the current directory has both `assignments`, `reference`, and `marking` subdirectories.
@@ -41,6 +41,14 @@ python3 grade.py all
 ### Viewing the results
 
 In the `marking/` directory, you can view the results of the grading. `grade.txt` shows the combined results, and all the generated files are also sitting there.
+
+## Server
+
+### Running it
+
+```bash
+flask --debug --app server run --port 80 --host=0.0.0.0
+```
 
 ## Requirements
 

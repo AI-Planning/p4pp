@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 
 example/reference/sas_plan
+.vscode
+*.json
