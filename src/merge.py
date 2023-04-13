@@ -11,6 +11,8 @@ USAGE = """
 """
 
 def confirm_same(dom1, dom2, checking):
+    dom1 = set(dom1)
+    dom2 = set(dom2)
     if dom1 != dom2:
         print(f"The {checking} are different for each domain")
         if dom1 - dom2:
