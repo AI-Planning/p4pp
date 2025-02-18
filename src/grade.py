@@ -33,7 +33,7 @@ mark = {
 
 def check_alignment(student_id, prob):
     os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob} {SUBMISSIONS_LOC}/{student_id}/domain.pddl {SUBMISSIONS_LOC}/{student_id}/{prob} {MARKING_LOC}/{student_id}/domain.pddl {MARKING_LOC}/{student_id}/{prob} > {MARKING_LOC}/{student_id}/merge.log 2>&1')
-    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob}.merged {MARKING_LOC}/{student_id}/domain.pddl {MARKING_LOC}/{student_id}/{prob} > {MARKING_LOC}/{student_id}/planner.{prob}.merged.log 2>&1')
+    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob}.merged {MARKING_LOC}/{student_id}/domain.pddl {MARKING_LOC}/{student_id}/{prob} 20 > {MARKING_LOC}/{student_id}/planner.{prob}.merged.log 2>&1')
     # check file for failure message
     with open(f'{MARKING_LOC}/{student_id}/planner.{prob}.merged.log', 'r') as f:
         mtext = f.read()
@@ -48,7 +48,7 @@ def check_alignment(student_id, prob):
     return (align, plan)
 
 def check_solve(student_id, prob):
-    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob} {SUBMISSIONS_LOC}/{student_id}/domain.pddl {SUBMISSIONS_LOC}/{student_id}/{prob} > {MARKING_LOC}/{student_id}/planner.{prob}.log 2>&1')
+    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob} {SUBMISSIONS_LOC}/{student_id}/domain.pddl {SUBMISSIONS_LOC}/{student_id}/{prob} 20 > {MARKING_LOC}/{student_id}/planner.{prob}.log 2>&1')
     return os.path.isfile(f'{MARKING_LOC}/{student_id}/plan.{prob}')
 
 def check_validate(student_id, prob):
