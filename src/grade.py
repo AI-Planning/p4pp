@@ -8,8 +8,12 @@ USAGE = """
 
 
 
-# Change to reflect the list of problems for testing
+# Change to reflect the list of problems for testing alignment
 PROBLEMS = ['p01', 'p02', 'p03']
+
+# Problems for just finding a plan
+PLAN_ONLY_PROBLEMS = ['p04']
+
 REFERENCE_LOC = 'data/reference'
 SUBMISSIONS_LOC = 'data/submissions'
 MARKING_LOC = 'data/marking'
@@ -33,7 +37,7 @@ mark = {
 
 def check_alignment(student_id, prob):
     os.system(f'python3 merge.py {REFERENCE_LOC}/domain.pddl {REFERENCE_LOC}/{prob} {SUBMISSIONS_LOC}/{student_id}/domain.pddl {SUBMISSIONS_LOC}/{student_id}/{prob} {MARKING_LOC}/{student_id}/domain.pddl {MARKING_LOC}/{student_id}/{prob} > {MARKING_LOC}/{student_id}/merge.log 2>&1')
-    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob}.merged {MARKING_LOC}/{student_id}/domain.pddl {MARKING_LOC}/{student_id}/{prob} 20 > {MARKING_LOC}/{student_id}/planner.{prob}.merged.log 2>&1')
+    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob}.merged {MARKING_LOC}/{student_id}/domain.pddl {MARKING_LOC}/{student_id}/{prob} 60 > {MARKING_LOC}/{student_id}/planner.{prob}.merged.log 2>&1')
     # check file for failure message
     with open(f'{MARKING_LOC}/{student_id}/planner.{prob}.merged.log', 'r') as f:
         mtext = f.read()
@@ -47,8 +51,12 @@ def check_alignment(student_id, prob):
             plan = f.read()
     return (align, plan)
 
-def check_solve(student_id, prob):
-    os.system(f'./plan.sh {MARKING_LOC}/{student_id}/plan.{prob} {SUBMISSIONS_LOC}/{student_id}/domain.pddl {SUBMISSIONS_LOC}/{student_id}/{prob} 20 > {MARKING_LOC}/{student_id}/planner.{prob}.log 2>&1')
+def check_solve(student_id, prob, optimal=False):
+    if optimal:
+        planner = 'planoptimal.sh'
+    else:
+        planner = 'plan.sh'
+    os.system(f'./{planner} {MARKING_LOC}/{student_id}/plan.{prob} {SUBMISSIONS_LOC}/{student_id}/domain.pddl {SUBMISSIONS_LOC}/{student_id}/{prob} 60 > {MARKING_LOC}/{student_id}/planner.{prob}.log 2>&1')
     return os.path.isfile(f'{MARKING_LOC}/{student_id}/plan.{prob}')
 
 def check_validate(student_id, prob):
@@ -99,6 +107,12 @@ def grade(student_id):
         results[prob]['solve'] = mark[check_solve(student_id, f'{prob}.pddl')]
 
 
+    print('  checking for optimal plans...')
+    only_plan_results = {p: {} for p in PLAN_ONLY_PROBLEMS}
+    for prob in only_plan_results:
+        only_plan_results[prob] = {'solve': mark[check_solve(student_id, f'{prob}.pddl', optimal=True)]}
+
+
     # confirm their plans work on our domain
     print('  validating plans...')
     for prob in results:
@@ -125,8 +139,16 @@ def grade(student_id):
     # format results
     res = format_results(results)
 
+    optimal_results = ""
+    if only_plan_results:
+        for prob in only_plan_results:
+            optimal_results += f"\nOptimal plan for {prob}:\n{only_plan_results[prob]['solve']}"
+            if only_plan_results[prob]['solve'] == mark[True]:
+                with open(f'{MARKING_LOC}/{student_id}/plan.{prob}.pddl', 'r') as f:
+                    optimal_results += f"\n{f.read()}"
+
     with open(f'{MARKING_LOC}/{student_id}/grade.txt', 'w', encoding='utf-8') as f:
-        f.write(f'\n{res}\n\n{plan_text}\n\n')
+        f.write(f'\n{res}\n\n{plan_text}\n\n{optimal_results}\n\n')
 
     print('Done!\n')
 
